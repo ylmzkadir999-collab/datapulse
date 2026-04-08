@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Reports
+*.pdf
+*.xlsx
+*.docx
+*.pptx
+*.png
+*.zip
+
+# Streamlit
+.streamlit/
+
+# Metriq.AI legacy files (ayrı proje — DataPulse'a ait değil)
+app.py
+config.py
+reporting.py
+reporta.py
+data_analysis.py
+maps.py
+ui_components.py
+ai_insights.py
+analytics_engine.py
+data_processor.py
+report_generator.py
+visualizations.py
