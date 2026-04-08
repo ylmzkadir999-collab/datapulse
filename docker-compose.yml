@@ -1,0 +1,56 @@
+# DataPulse v5 — Local Development Stack
+version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    command: uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: .
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    command: celery -A backend.worker.tasks worker --loglevel=info --concurrency=4
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  flower:
+    build: .
+    ports:
+      - "5555:5555"
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - worker
+    command: celery -A backend.worker.tasks flower --port=5555
+
+volumes:
+  redis_data:

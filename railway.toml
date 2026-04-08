@@ -1,0 +1,13 @@
+# DataPulse v5 — Railway Deploy Config
+# CRITICAL: builder="DOCKERFILE" prevents Railpack from running
+# Railpack causes "No module named backend" because PYTHONPATH not set
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+healthcheckPath = "/health"
+healthcheckTimeout = 30
