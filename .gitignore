@@ -54,6 +54,9 @@ Thumbs.db
 # Streamlit
 .streamlit/
 
+# GitHub Actions (eski MetriqAI workflows — DataPulse için gerekli değil)
+.github/
+
 # Metriq.AI legacy files (ayrı proje — DataPulse'a ait değil)
 app.py
 config.py
