@@ -43,8 +43,9 @@ RUN playwright install chromium --with-deps || echo "Playwright install skipped"
 # Copy application code
 COPY . .
 
-# PYTHONPATH=/app is critical — "from backend.xxx" imports
-ENV PYTHONPATH=/app
+# Repo yapısı: app/backend/ → Docker'da /app/app/backend/
+# PYTHONPATH=/app/app → "from backend.xxx" importları çalışır
+ENV PYTHONPATH=/app/app
 ENV PORT=8000
 
 EXPOSE 8000
