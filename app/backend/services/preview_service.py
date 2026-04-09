@@ -29,12 +29,15 @@ class PreviewService:
     """Filigran üretimi ve unlock token yönetimi."""
 
     def __init__(self) -> None:
+        self._db: Optional[Client] = None
         if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY:
-            self._db: Optional[Client] = create_client(
-                settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY
-            )
+            try:
+                self._db = create_client(
+                    settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY
+                )
+            except Exception as e:
+                logger.error(f"PreviewService Supabase başlatılamadı: {e} — demo modda")
         else:
-            self._db = None
             logger.warning("Supabase bağlantısı yok — PreviewService demo modda")
 
     # ── Preview ───────────────────────────────────────────────

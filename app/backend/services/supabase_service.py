@@ -28,15 +28,22 @@ class SupabaseService:
     """Supabase Client wrapper — singleton pattern."""
 
     def __init__(self) -> None:
+        self._client: Optional[Client] = None
+        self._service_client: Optional[Client] = None
         if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
             logger.warning("Supabase URL/KEY eksik — demo modunda çalışıyor")
-            self._client: Optional[Client] = None
-            self._service_client: Optional[Client] = None
-        else:
+            return
+        try:
             self._client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
             self._service_client = create_client(
                 settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY
             )
+            logger.info("Supabase bağlantısı kuruldu.")
+        except Exception as e:
+            # Hatalı key ile app crash olmayacak — /health endpoint çalışmaya devam eder
+            logger.error(f"Supabase başlatılamadı: {e} — demo modunda çalışıyor")
+            self._client = None
+            self._service_client = None
 
     def _db(self) -> Client:
         if not self._service_client:
