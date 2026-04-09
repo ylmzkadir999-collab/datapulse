@@ -68,7 +68,7 @@ def _iyzico_auth_header() -> dict:
     return {
         "Authorization": f"IYZWS {settings.IYZICO_API_KEY}:{digest}",
         "x-iyzi-rnd": nonce,
-        "x-iyzi-client-version": "iyzipay-python-2.0.5",
+        "x-iyzi-client-version": "iyzipay-python-1.0.46",
         "Content-Type": "application/json",
     }
 
