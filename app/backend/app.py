@@ -12,8 +12,7 @@ from typing import Dict, List
 
 from fastapi import FastAPI, Form, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from backend.core.config import settings
 from backend.routes import dashboard, payment
@@ -143,8 +142,7 @@ async def health() -> dict:
 
 
 # ── Frontend (SPA) ────────────────────────────────────────────
-if FRONTEND_DIR.exists():
-    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
+# Not: assets/ boş olduğu için StaticFiles mount yok — her şey index.html içinde inline
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
