@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataPulse v5</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --accent: #238636;
+      --accent-hover: #2ea043;
+      --blue: #1f6feb;
+      --blue-hover: #388bfd;
+      --red: #da3633;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .nav-brand { font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #3fb950); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; font-size: 12px; color: var(--text-muted); }
+    .btn-sm { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px; }
+    .btn-sm:hover { border-color: var(--blue); color: var(--blue-hover); }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── AUTH ── */
+    .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 40px; width: 100%; max-width: 400px; }
+    .auth-logo { text-align: center; margin-bottom: 28px; }
+    .auth-logo h1 { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #58a6ff, #3fb950); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .auth-logo p { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+    .auth-tabs { display: flex; background: var(--surface2); border-radius: var(--radius); padding: 3px; margin-bottom: 24px; }
+    .auth-tab { flex: 1; text-align: center; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--text-muted); transition: all .2s; }
+    .auth-tab.active { background: var(--bg); color: var(--text); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+    .form-group input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; transition: border .2s; }
+    .form-group input:focus { border-color: var(--blue); }
+    .btn-primary { width: 100%; background: var(--accent); border: none; color: #fff; padding: 12px; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .auth-error { background: rgba(218,54,51,.1); border: 1px solid var(--red); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: #f85149; margin-bottom: 16px; display: none; }
+
+    /* ── DASHBOARD ── */
+    .dash-layout { max-width: 1100px; margin: 0 auto; padding: 32px 24px; display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+    @media(max-width:768px){ .dash-layout { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+
+    /* Task types */
+    .task-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .task-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: var(--radius); padding: 12px 8px; cursor: pointer; text-align: center; transition: all .2s; }
+    .task-btn:hover { border-color: var(--blue); }
+    .task-btn.selected { border-color: var(--blue); background: rgba(31,111,235,.1); }
+    .task-btn .icon { font-size: 22px; margin-bottom: 4px; }
+    .task-btn .label { font-size: 11px; color: var(--text-muted); }
+
+    /* Upload */
+    .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px; text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 16px; }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--blue); background: rgba(31,111,235,.05); }
+    .upload-zone .icon { font-size: 36px; margin-bottom: 8px; }
+    .upload-zone p { color: var(--text-muted); font-size: 14px; }
+    .upload-zone .filename { color: var(--blue-hover); font-size: 13px; margin-top: 6px; }
+    #fileInput { display: none; }
+    .btn-run { width: 100%; background: linear-gradient(135deg, #1f6feb, #238636); border: none; color: #fff; padding: 14px; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .2s; letter-spacing: .3px; }
+    .btn-run:hover { opacity: .88; }
+    .btn-run:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Jobs list */
+    .jobs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .jobs-header h3 { font-size: 15px; font-weight: 600; }
+    .btn-refresh { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 5px 12px; border-radius: var(--radius); cursor: pointer; font-size: 12px; }
+    .job-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border .2s; }
+    .job-item:hover { border-color: var(--blue); }
+    .job-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .job-status.queued { background: #e3b341; }
+    .job-status.running { background: var(--blue); animation: pulse 1s infinite; }
+    .job-status.done { background: var(--accent); }
+    .job-status.failed { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .job-info { flex: 1; min-width: 0; }
+    .job-type { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .job-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .job-rows { font-size: 12px; color: var(--text-muted); }
+    .empty-state { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 14px; }
+
+    /* ── JOB DETAIL MODAL ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 820px; max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; line-height: 1; }
+    .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+
+    /* Progress */
+    .progress-wrap { margin-bottom: 20px; }
+    .progress-bar-bg { background: var(--surface2); border-radius: 100px; height: 8px; overflow: hidden; }
+    .progress-bar { background: linear-gradient(90deg, #1f6feb, #3fb950); height: 100%; border-radius: 100px; transition: width .4s; }
+    .progress-label { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+
+    /* Logs */
+    .log-box { background: #010409; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; font-family: 'SF Mono', monospace; font-size: 12px; max-height: 200px; overflow-y: auto; margin-bottom: 20px; }
+    .log-line { color: #7ee787; margin-bottom: 3px; }
+    .log-line.error { color: #f85149; }
+    .log-line.info { color: #79c0ff; }
+
+    /* Preview table */
+    .preview-section h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .preview-badge { background: rgba(56,139,253,.15); color: var(--blue-hover); border: 1px solid rgba(56,139,253,.3); border-radius: 20px; padding: 2px 10px; font-size: 11px; }
+    .locked-badge { background: rgba(218,54,51,.1); color: #f85149; border: 1px solid rgba(218,54,51,.3); border-radius: 20px; padding: 2px 10px; font-size: 11px; }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--surface2); padding: 10px 14px; text-align: left; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    .masked { color: #30363d; font-family: monospace; letter-spacing: 2px; }
+    .locked-row td { background: rgba(218,54,51,.03); }
+
+    /* Unlock */
+    .unlock-box { background: linear-gradient(135deg, rgba(31,111,235,.08), rgba(56,139,253,.08)); border: 1px solid rgba(56,139,253,.3); border-radius: var(--radius); padding: 20px; text-align: center; }
+    .unlock-box h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .unlock-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+    .btn-unlock { background: linear-gradient(135deg, #1f6feb, #238636); border: none; color: #fff; padding: 12px 28px; border-radius: var(--radius); font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn-unlock:hover { opacity: .88; }
+    .download-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); border: none; color: #fff; padding: 12px 24px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .download-btn:hover { background: var(--accent-hover); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; font-size: 14px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--accent); }
+    .toast.error { border-color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- ══ AUTH SCREEN ══════════════════════════════════════════ -->
+<div id="authScreen" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <h1>⚡ DataPulse</h1>
+        <p>Production-grade veri otomasyon platformu</p>
+      </div>
+      <div class="auth-error" id="authError"></div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchTab('login')">Giriş Yap</div>
+        <div class="auth-tab" onclick="switchTab('register')">Kayıt Ol</div>
+      </div>
+      <form id="authForm" onsubmit="handleAuth(event)">
+        <div class="form-group">
+          <label>E-posta</label>
+          <input type="email" id="authEmail" placeholder="ornek@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Şifre</label>
+          <input type="password" id="authPassword" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-primary" id="authBtn">Giriş Yap</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD SCREEN ════════════════════════════════════ -->
+<div id="dashScreen" class="screen">
+  <nav>
+    <span class="nav-brand">⚡ DataPulse v5</span>
+    <div class="nav-right">
+      <span class="badge" id="planBadge">Free</span>
+      <span class="badge" id="userEmail" style="max-width:160px;overflow:hidden;text-overflow:ellipsis"></span>
+      <button class="btn-sm" onclick="logout()">Çıkış</button>
+    </div>
+  </nav>
+
+  <div class="dash-layout">
+    <!-- Sol Panel: Yeni Job -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <h3>🔧 Görev Tipi</h3>
+        <div class="task-grid">
+          <div class="task-btn selected" data-task="pdf2excel" onclick="selectTask(this)">
+            <div class="icon">📄</div>
+            <div class="label">PDF → Excel</div>
+          </div>
+          <div class="task-btn" data-task="scrape" onclick="selectTask(this)">
+            <div class="icon">🕷️</div>
+            <div class="label">Web Scrape</div>
+          </div>
+          <div class="task-btn" data-task="email_scrape" onclick="selectTask(this)">
+            <div class="icon">📧</div>
+            <div class="label">Email Bul</div>
+          </div>
+          <div class="task-btn" data-task="clean" onclick="selectTask(this)">
+            <div class="icon">🧹</div>
+            <div class="label">Veri Temizle</div>
+          </div>
+          <div class="task-btn" data-task="bulk_clean" onclick="selectTask(this)">
+            <div class="icon">🗂️</div>
+            <div class="label">Toplu Temizle</div>
+          </div>
+          <div class="task-btn" data-task="excel_merge" onclick="selectTask(this)">
+            <div class="icon">🔗</div>
+            <div class="label">Excel Birleştir</div>
+          </div>
+          <div class="task-btn" data-task="sheets_sync" onclick="selectTask(this)">
+            <div class="icon">📊</div>
+            <div class="label">Sheets Sync</div>
+          </div>
+          <div class="task-btn" data-task="full_pipeline" onclick="selectTask(this)">
+            <div class="icon">🚀</div>
+            <div class="label">Full Pipeline</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📁 Dosya Yükle</h3>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+             ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+          <div class="icon">☁️</div>
+          <p>Tıkla veya sürükle bırak</p>
+          <p style="font-size:12px;margin-top:4px">PDF, Excel, CSV desteklenir</p>
+          <div class="filename" id="fileName"></div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+        <button class="btn-run" id="runBtn" onclick="startJob()">▶ Görevi Başlat</button>
+      </div>
+    </div>
+
+    <!-- Sağ Panel: Job Listesi -->
+    <div>
+      <div class="card">
+        <div class="jobs-header">
+          <h3>📋 Görevlerim</h3>
+          <button class="btn-refresh" onclick="loadJobs()">↻ Yenile</button>
+        </div>
+        <div id="jobsList">
+          <div class="empty-state">Henüz görev yok.<br>Sol panelden başlatabilirsiniz.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JOB DETAIL MODAL ════════════════════════════════════ -->
+<div class="modal-overlay" id="jobModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Görev Detayı</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px" id="modalJobId"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Progress -->
+      <div class="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="progress-label">
+          <span id="progressStatus">Bekliyor...</span>
+          <span id="progressPct">0%</span>
+        </div>
+      </div>
+
+      <!-- Logs -->
+      <div class="log-box" id="logBox">
+        <div class="log-line info">Görev logları burada görünecek...</div>
+      </div>
+
+      <!-- Preview Table -->
+      <div class="preview-section" id="previewSection" style="display:none">
+        <h4>
+          Veri Önizleme
+          <span class="preview-badge" id="previewBadge"></span>
+          <span class="locked-badge" id="lockedBadge"></span>
+        </h4>
+        <div class="table-wrap">
+          <table id="previewTable">
+            <thead id="previewHead"></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Unlock -->
+        <div class="unlock-box" id="unlockBox" style="display:none">
+          <h4>🔒 Tam Veri Kilitli</h4>
+          <p id="unlockDesc">Tüm satırlara erişmek için ödeme yapın.</p>
+          <button class="btn-unlock" onclick="initiateUnlock()">💳 Kilidi Aç — ₺1</button>
+        </div>
+        <div id="downloadBox" style="display:none;text-align:center">
+          <a class="download-btn" id="downloadLink" href="#" download>
+            ⬇️ Tüm Veriyi İndir
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══════════════════════════════════════════════════
+const API = window.location.origin;
+let token = localStorage.getItem('dp_token') || '';
+let currentUser = JSON.parse(localStorage.getItem('dp_user') || '{}');
+let selectedTask = 'pdf2excel';
+let selectedFile = null;
+let activeJobId = null;
+let ws = null;
+let authMode = 'login';
+
+// ══ INIT ═══════════════════════════════════════════════════
+if (token) {
+  showDash();
+} else {
+  show('authScreen');
+}
+
+// ══ AUTH ═══════════════════════════════════════════════════
+function switchTab(mode) {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.toggle('active', (mode==='login'?0:1)===i);
+  });
+  document.getElementById('authBtn').textContent = mode==='login' ? 'Giriş Yap' : 'Kayıt Ol';
+}
+
+async function handleAuth(e) {
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value;
+  const pass  = document.getElementById('authPassword').value;
+  const btn   = document.getElementById('authBtn');
+  const err   = document.getElementById('authError');
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  err.style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('email', email);
+  fd.append('password', pass);
+
+  try {
+    const endpoint = authMode === 'login' ? '/api/v1/auth/login' : '/api/v1/auth/register';
+    const res = await fetch(API + endpoint, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Hata oluştu');
+    token = data.token;
+    currentUser = { email: data.email, plan: data.plan || 'free' };
+    localStorage.setItem('dp_token', token);
+    localStorage.setItem('dp_user', JSON.stringify(currentUser));
+    showDash();
+  } catch(ex) {
+    err.textContent = ex.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode==='login' ? 'Giriş Yap' : 'Kayıt Ol';
+  }
+}
+
+function logout() {
+  token = '';
+  currentUser = {};
+  localStorage.removeItem('dp_token');
+  localStorage.removeItem('dp_user');
+  show('authScreen');
+}
+
+// ══ NAVIGATION ═════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showDash() {
+  show('dashScreen');
+  document.getElementById('userEmail').textContent = currentUser.email || '';
+  document.getElementById('planBadge').textContent = (currentUser.plan || 'free').toUpperCase();
+  loadJobs();
+}
+
+// ══ TASK SELECTION ══════════════════════════════════════════
+function selectTask(el) {
+  document.querySelectorAll('.task-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTask = el.dataset.task;
+}
+
+// ══ FILE UPLOAD ═════════════════════════════════════════════
+function handleFileSelect(e) { setFile(e.target.files[0]); }
+function handleDrop(e) { e.preventDefault(); handleDragLeave(); setFile(e.dataTransfer.files[0]); }
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
+function handleDragLeave() { document.getElementById('uploadZone').classList.remove('drag'); }
+
+function setFile(file) {
+  selectedFile = file;
+  const fn = document.getElementById('fileName');
+  fn.textContent = file ? `✓ ${file.name}` : '';
+}
+
+// ══ START JOB ══════════════════════════════════════════════
+async function startJob() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Gönderiliyor...';
+
+  const fd = new FormData();
+  fd.append('task_type', selectedTask);
+  if (selectedFile) fd.append('file', selectedFile);
+
+  try {
+    const res = await apiFetch('/api/v1/jobs', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+    toast(`Job başlatıldı: ${data.job_id.slice(0,8)}...`, 'success');
+    openJobModal(data.job_id, selectedTask);
+    loadJobs();
+  } catch(ex) {
+    toast(ex.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ Görevi Başlat';
+  }
+}
+
+// ══ JOBS LIST ══════════════════════════════════════════════
+async function loadJobs() {
+  try {
+    const res = await apiFetch('/api/v1/jobs');
+    const data = await res.json();
+    renderJobs(data.jobs || []);
+  } catch(ex) {
+    console.error(ex);
+  }
+}
+
+function renderJobs(jobs) {
+  const el = document.getElementById('jobsList');
+  if (!jobs.length) {
+    el.innerHTML = '<div class="empty-state">Henüz görev yok.<br>Sol panelden başlatabilirsiniz.</div>';
+    return;
+  }
+  el.innerHTML = jobs.map(j => `
+    <div class="job-item" onclick="openJobModal('${j.id}','${j.task_type}')">
+      <div class="job-status ${j.status}"></div>
+      <div class="job-info">
+        <div class="job-type">${taskLabel(j.task_type)}</div>
+        <div class="job-date">${timeAgo(j.created_at)}</div>
+      </div>
+      <div class="job-rows">${j.status === 'done' ? '✓ Tamamlandı' : statusLabel(j.status)}</div>
+    </div>
+  `).join('');
+}
+
+// ══ JOB MODAL ══════════════════════════════════════════════
+async function openJobModal(jobId, taskType) {
+  activeJobId = jobId;
+  document.getElementById('modalTitle').textContent = `${taskLabel(taskType)} — ${statusLabel('running')}`;
+  document.getElementById('modalJobId').textContent = jobId;
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressPct').textContent = '0%';
+  document.getElementById('progressStatus').textContent = 'Bağlanıyor...';
+  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('jobModal').classList.add('open');
+
+  // WebSocket bağlan
+  connectWS(jobId);
+
+  // Mevcut durumu çek
+  try {
+    const res = await apiFetch(`/api/v1/jobs/${jobId}`);
+    const job = await res.json();
+    updateProgress(job.progress, job.status);
+    (job.logs || []).forEach(l => addLog(l));
+    if (job.status === 'done' && job.preview) {
+      renderPreview(job.preview, job.unlock_required, null);
+    }
+  } catch(ex) {}
+}
+
+function closeModal() {
+  document.getElementById('jobModal').classList.remove('open');
+  if (ws) { ws.close(); ws = null; }
+  activeJobId = null;
+}
+
+function connectWS(jobId) {
+  if (ws) ws.close();
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/jobs/${jobId}`);
+
+  const ping = setInterval(() => { if (ws?.readyState===1) ws.send('ping'); }, 20000);
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'log') addLog(msg.text, msg.level);
+    else if (msg.type === 'progress') updateProgress(msg.pct);
+    else if (msg.type === 'done') {
+      updateProgress(100, 'done');
+      if (msg.result?.preview) renderPreview(msg.result.preview, msg.result.unlock_required, msg.result.download_url);
+      loadJobs();
+      clearInterval(ping);
+    }
+  };
+  ws.onclose = () => clearInterval(ping);
+}
+
+function addLog(text, level='') {
+  const box = document.getElementById('logBox');
+  const line = document.createElement('div');
+  line.className = `log-line ${level}`;
+  line.textContent = `› ${text}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function updateProgress(pct, status='') {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  if (status) {
+    document.getElementById('progressStatus').textContent = statusLabel(status);
+    document.getElementById('modalTitle').textContent =
+      `${document.getElementById('modalTitle').textContent.split('—')[0].trim()} — ${statusLabel(status)}`;
+  }
+}
+
+// ══ PREVIEW TABLE ═══════════════════════════════════════════
+function renderPreview(preview, unlockRequired, downloadUrl) {
+  const sec = document.getElementById('previewSection');
+  sec.style.display = 'block';
+
+  const { columns=[], preview_rows=[], masked_rows=[], total_rows=0, preview_count=0 } = preview;
+
+  document.getElementById('previewBadge').textContent = `${preview_count} satır ücretsiz`;
+  document.getElementById('lockedBadge').textContent = unlockRequired ? `${masked_rows.length} satır kilitli` : `${total_rows} satır tam`;
+
+  // Thead
+  const head = document.getElementById('previewHead');
+  head.innerHTML = `<tr>${columns.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+
+  // Tbody
+  const body = document.getElementById('previewBody');
+  let html = preview_rows.map(row => `<tr>${columns.map(c=>`<td>${row[c]??''}</td>`).join('')}</tr>`).join('');
+  if (masked_rows.length) {
+    html += masked_rows.map(() =>
+      `<tr class="locked-row">${columns.map(()=>`<td><span class="masked">████████</span></td>`).join('')}</tr>`
+    ).join('');
+  }
+  body.innerHTML = html;
+
+  // Unlock / Download
+  if (unlockRequired && masked_rows.length > 0) {
+    document.getElementById('unlockBox').style.display = 'block';
+    document.getElementById('unlockDesc').textContent =
+      `${masked_rows.length} satır kilitli. Tamamını indirmek için ödeme yapın.`;
+    document.getElementById('downloadBox').style.display = 'none';
+  } else if (downloadUrl) {
+    document.getElementById('unlockBox').style.display = 'none';
+    document.getElementById('downloadBox').style.display = 'block';
+    document.getElementById('downloadLink').href = downloadUrl;
+  } else {
+    document.getElementById('unlockBox').style.display = 'none';
+    document.getElementById('downloadBox').style.display = 'none';
+  }
+}
+
+async function initiateUnlock() {
+  if (!activeJobId) return;
+  try {
+    const fd = new FormData();
+    fd.append('job_id', activeJobId);
+    const res = await apiFetch('/api/v1/payment/checkout', { method: 'POST', body: fd });
+    const data = await res.json();
+    // İyzico checkout formunu aç
+    if (data.checkout_form_content) {
+      const win = window.open('', '_blank', 'width=480,height=620');
+      win.document.write(`<!DOCTYPE html><html><body>${data.checkout_form_content}</body></html>`);
+    } else {
+      toast('Ödeme sistemi şu an aktif değil.', 'error');
+    }
+  } catch(ex) {
+    toast(ex.message, 'error');
+  }
+}
+
+// ══ HELPERS ════════════════════════════════════════════════
+async function apiFetch(path, opts={}) {
+  return fetch(API + path, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${token}`, ...(opts.headers||{}) },
+  });
+}
+
+function taskLabel(t) {
+  return { pdf2excel:'PDF→Excel', scrape:'Web Scrape', email_scrape:'Email Bul',
+    clean:'Veri Temizle', bulk_clean:'Toplu Temizle', excel_merge:'Excel Birleştir',
+    sheets_sync:'Sheets Sync', full_pipeline:'Full Pipeline' }[t] || t;
+}
+
+function statusLabel(s) {
+  return { queued:'⏳ Kuyrukta', running:'⚡ Çalışıyor', done:'✅ Tamamlandı', failed:'❌ Hata' }[s] || s;
+}
+
+function timeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return `${diff}s önce`;
+  if (diff < 3600) return `${Math.floor(diff/60)}dk önce`;
+  return `${Math.floor(diff/3600)}sa önce`;
+}
+
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Auto-refresh jobs every 15s
+setInterval(() => { if (document.getElementById('dashScreen').classList.contains('active')) loadJobs(); }, 15000);
+</script>
+</body>
+</html>
